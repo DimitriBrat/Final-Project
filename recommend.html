@@ -9,7 +9,7 @@
 <body>
   <header class="navbar">
     <div class="nav-left"><a href="about.html">About</a></div>
-    <div class="nav-center"><a href="home.html">Home</a></div>
+    <div class="nav-center"><a href="index.html">Home</a></div>
     <div class="nav-right"><a href="recommend.html">Search</a></div>
   </header>
 
@@ -24,23 +24,21 @@
 
     <button onclick="fetchRecommendations()">Find Recommendations</button>
 
-    <div id="loading" style="display:none; text-align:center; margin-top:20px;">
-      <p>🔄 Searching for recommendations...</p>
+    <div id="loading" style="display:none;text-align:center;margin-top:20px;">
+      <p>🔄 Searching for recommendations…</p>
     </div>
 
     <div class="result" id="results"></div>
   </main>
 
   <script>
-    const apiKey = '2978537df67a79071c5e429597084d46';
-
-    /* ---- NEW: picks local Express or Vercel serverless automatically ---- */
+    const apiKey  = '2978537df67a79071c5e429597084d46';
     const apiBase =
       window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:3000/api'
         : '/api';
 
-    /* ---------------- Core functions ---------------- */
+    /* ---------- Search & display functions ---------- */
 
     async function fetchRecommendations() {
       const song   = document.getElementById('songInput').value.trim();
@@ -58,96 +56,90 @@
       }
 
       if (song && artist) {
-        const trackUrl = `https://ws.audioscrobbler.com/2.0/?method=track.getsimilar&track=${encodeURIComponent(song)}&artist=${encodeURIComponent(artist)}&api_key=${apiKey}&format=json`;
-
+        const url = `https://ws.audioscrobbler.com/2.0/?method=track.getsimilar&track=${encodeURIComponent(song)}&artist=${encodeURIComponent(artist)}&api_key=${apiKey}&format=json`;
         try {
-          const res  = await fetch(trackUrl);
+          const res  = await fetch(url);
           const data = await res.json();
           loadingDiv.style.display = 'none';
 
           if (data.similartracks?.track?.length > 0) {
-            displayResults(data.similartracks.track, "Tracks");
+            displayResults(data.similartracks.track, 'Tracks');
           } else {
-            showFallbackArtistResults(artist, true);
+            showFallbackArtistResults(artist,true);
           }
-        } catch (error) {
-          console.error("Track fetch error:", error);
+        } catch (err) {
+          console.error(err);
           loadingDiv.style.display = 'none';
           resultsDiv.innerHTML = '<p>Error fetching track recommendations.</p>';
         }
       } else {
-        showFallbackArtistResults(artist, false);
+        showFallbackArtistResults(artist,false);
       }
     }
 
-    async function showFallbackArtistResults(artist, showMessage) {
-      const url = `https://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist=${encodeURIComponent(artist)}&api_key=${apiKey}&format=json`;
-      const resultsDiv = document.getElementById('results');
-      const loadingDiv = document.getElementById('loading');
-
-      try {
-        const res  = await fetch(url);
-        const data = await res.json();
-        loadingDiv.style.display = 'none';
-
-        if (data.similarartists?.artist?.length > 0) {
-          if (showMessage) {
-            resultsDiv.innerHTML = `<h2>Sorry! No similar songs found, but here are similar artists to <em>${artist}</em>:</h2>`;
+    async function showFallbackArtistResults(artist,showMsg){
+      const url=`https://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist=${encodeURIComponent(artist)}&api_key=${apiKey}&format=json`;
+      const resultsDiv=document.getElementById('results');
+      const loadingDiv=document.getElementById('loading');
+      try{
+        const res=await fetch(url);
+        const data=await res.json();
+        loadingDiv.style.display='none';
+        if(data.similarartists?.artist?.length>0){
+          if(showMsg){
+            resultsDiv.innerHTML=`<h2>Sorry! No similar songs found, but here are similar artists to <em>${artist}</em>:</h2>`;
           }
-          displayResults(data.similarartists.artist, "Artists");
-        } else {
-          resultsDiv.innerHTML = '<p>No recommendations found.</p>';
+          displayResults(data.similarartists.artist,'Artists');
+        }else{
+          resultsDiv.innerHTML='<p>No recommendations found.</p>';
         }
-      } catch (err) {
-        console.error("Artist fallback error:", err);
-        loadingDiv.style.display = 'none';
-        resultsDiv.innerHTML = '<p>Error fetching fallback recommendations.</p>';
+      }catch(err){
+        console.error(err);
+        loadingDiv.style.display='none';
+        resultsDiv.innerHTML='<p>Error fetching fallback recommendations.</p>';
       }
     }
 
-    function displayResults(results, type) {
-      const resultsDiv = document.getElementById('results');
-      resultsDiv.innerHTML += `<h2>Recommended ${type}:</h2>`;
-
-      results.forEach(item => {
-        resultsDiv.innerHTML += `
+    function displayResults(items,type){
+      const resultsDiv=document.getElementById('results');
+      resultsDiv.innerHTML+=`<h2>Recommended ${type}:</h2>`;
+      items.forEach(item=>{
+        resultsDiv.innerHTML+=`
           <div class="item">
             <strong>${item.name}</strong>
             ${item.artist ? `<br><em>${item.artist.name}</em>` : ''}
-            ${item.url ? `<br><a href="${item.url}" target="_blank">More Info</a>` : ''}
+            ${item.url ? `<br><a href="${item.url}" target="_blank">More Info</a>` : ''}
             <br>
-            <button onclick="saveItem('${type}', '${item.name}', '${item.artist?.name || ''}')">
-              Save ${type === 'Tracks' ? 'Song' : 'Artist'}
+            <button onclick="saveItem('${type}','${item.name}','${item.artist?.name || ''}')">
+              Save ${type==='Tracks'?'Song':'Artist'}
             </button>
-          </div>
-        `;
+          </div>`;
       });
     }
 
-    async function saveItem(type, name, artist) {
-      const url = type === 'Tracks'
+    async function saveItem(type,name,artist){
+      const url = type==='Tracks'
         ? `${apiBase}/save-song`
         : `${apiBase}/save-artist`;
 
-      const payload = type === 'Tracks'
-        ? { title: name, artist }
+      const payload = type==='Tracks'
+        ? { title:name, artist }
         : { name };
 
-      try {
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+      try{
+        const res=await fetch(url,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify(payload)
         });
-
-        if (res.ok) {
-          Swal.fire('Saved!', `"${name}" has been saved.`, 'success');
-        } else {
-          Swal.fire('Oops!', `Error saving "${name}".`, 'error');
+        if(res.ok){
+          Swal.fire('Saved!',`"${name}" has been saved.`,'success');
+        }else{
+          Swal.fire('Oops!',`Error saving "${name}".`,'error');
         }
-      } catch (err) {
-        console.error("Save error:", err);
-        Swal.fire('Error', 'Could not connect to server.', 'error');
+      }catch(err){
+        console.error(err);
+        Swal.fire('Error','Could not connect to server.','error');
       }
     }
   </script>
