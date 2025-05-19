@@ -2,38 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>User Info - Music Recommender</title>
+  <title>User Info ‑ Music Recommender</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
-    .user-layout {
-      display: flex;
-      flex-direction: row;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-    .user-layout > .left,
-    .user-layout > .right {
-      flex: 1;
-      min-width: 300px;
-    }
-    .list-box {
-      margin-bottom: 20px;
-      background: #fff;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    @media (max-width: 768px) {
-      .user-layout { flex-direction: column; }
-    }
+    .user-layout{display:flex;flex-direction:row;gap:20px;flex-wrap:wrap;}
+    .user-layout>.left,.user-layout>.right{flex:1;min-width:300px;}
+    .list-box{margin-bottom:20px;background:#fff;padding:15px;border-radius:8px;
+              box-shadow:0 2px 6px rgba(0,0,0,.1);}
+    @media(max-width:768px){.user-layout{flex-direction:column;}}
   </style>
 </head>
 <body>
   <header class="navbar">
     <div class="nav-left"><a href="about.html">About</a></div>
-    <div class="nav-center"><a href="home.html">Home</a></div>
+    <div class="nav-center"><a href="index.html">Home</a></div>
     <div class="nav-right"><a href="recommend.html">Search</a></div>
   </header>
 
@@ -43,7 +26,7 @@
     <div class="user-layout">
       <div class="left">
         <div class="list-box">
-          <h3>Top 5 Artists by Saved Songs</h3>
+          <h3>Top 5 Artists by Saved Songs</h3>
           <canvas id="topArtistsChart"></canvas>
         </div>
       </div>
@@ -63,69 +46,58 @@
   </main>
 
   <script>
-    /* ---- NEW base switch ---- */
     const apiBase =
       window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:3000/api'
         : '/api';
 
-    async function loadSavedData() {
-      const [artistsRes, songsRes] = await Promise.all([
+    async function loadSavedData(){
+      const [artistsRes,songsRes]=await Promise.all([
         fetch(`${apiBase}/saved-artist`),
         fetch(`${apiBase}/saved-song`)
       ]);
 
-      const savedArtists = await artistsRes.json();
-      const savedSongs   = await songsRes.json();
+      const savedArtists=await artistsRes.json();
+      const savedSongs  =await songsRes.json();
 
-      const savedArtistsList = document.getElementById('savedArtistsList');
-      const savedSongsList   = document.getElementById('savedSongsList');
+      const artistsList=document.getElementById('savedArtistsList');
+      const songsList  =document.getElementById('savedSongsList');
+      artistsList.innerHTML='';
+      songsList.innerHTML='';
 
-      savedArtistsList.innerHTML = '';
-      savedSongsList.innerHTML   = '';
-
-      savedArtists.forEach(item => {
-        const li = document.createElement('li');
-        li.textContent = item.name;
-        savedArtistsList.appendChild(li);
+      savedArtists.forEach(a=>{
+        const li=document.createElement('li');
+        li.textContent=a.name;
+        artistsList.appendChild(li);
       });
 
-      savedSongs.forEach(song => {
-        const li = document.createElement('li');
-        li.textContent = `${song.title} by ${song.artist}`;
-        savedSongsList.appendChild(li);
+      savedSongs.forEach(s=>{
+        const li=document.createElement('li');
+        li.textContent=`${s.title} by ${s.artist}`;
+        songsList.appendChild(li);
       });
 
-      buildTopArtistsChart(savedSongs);
+      buildChart(savedSongs);
     }
 
-    function buildTopArtistsChart(songs) {
-      const counts = {};
-      songs.forEach(({ artist }) => {
-        if (!artist) return;
-        counts[artist] = (counts[artist] || 0) + 1;
+    function buildChart(songs){
+      const counts={};
+      songs.forEach(({artist})=>{
+        if(!artist) return;
+        counts[artist]=(counts[artist]||0)+1;
       });
 
-      const top5 = Object.entries(counts)
-        .sort((a,b) => b[1]-a[1])
+      const top=Object.entries(counts)
+        .sort((a,b)=>b[1]-a[1])
         .slice(0,5);
 
-      const labels = top5.map(x => x[0]);
-      const data   = top5.map(x => x[1]);
+      const labels=top.map(x=>x[0]);
+      const data  =top.map(x=>x[1]);
 
-      new Chart(document.getElementById('topArtistsChart'), {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [{
-            label: '# of Saved Songs',
-            data
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-        }
+      new Chart(document.getElementById('topArtistsChart'),{
+        type:'bar',
+        data:{labels,datasets:[{label:'# of Saved Songs',data}]},
+        options:{responsive:true,scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}
       });
     }
 
