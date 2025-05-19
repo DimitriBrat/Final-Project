@@ -124,7 +124,6 @@ final-project/
 ├─ recommend.html
 ├─ user.html
 ├─ styles.css
-├─ chart.js
 ├─ server.js
 ├─ package.json
 └─ README.md
